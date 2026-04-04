@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option java_package = "ru.ilyubarskiy.mai.generated";
+option java_multiple_files = true;
+
+service RoverService {
+  rpc GetFreeRovers(FreeRoversRequest) returns (FreeRoversResponse);
+  rpc GetRoverStatus(RoverStatusRequest) returns (RoverStatusResponse);
+}
+
+message FreeRoversRequest {
+  BoundingBox bbox = 1;
+}
+
+message RoverStatusRequest {
+  string rover_id = 1;
+}
+
+message RoverStatusResponse {
+  string rover_id = 1;
+  double lat = 2;
+  double lon = 3;
+  double battery_level = 4;
+  string status = 5;
+  RoverModel model = 6;
+  int64 last_update_ts = 7;
+}
+
+message RoverModel {
+  double capacity = 1;
+  double avgSpeed = 2;
+  string id = 3;
+}
+
+message BoundingBox {
+  double min_lat = 1;
+  double min_lon = 2;
+  double max_lat = 3;
+  double max_lon = 4;
+}
+
+message FreeRoversResponse {
+  repeated RoverStatusResponse rovers = 1;
+}

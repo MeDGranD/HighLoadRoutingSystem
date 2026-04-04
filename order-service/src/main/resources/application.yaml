@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5433,${POSTGRES_HOST:localhost}:5434,${POSTGRES_HOST:localhost}:5435/citus_db?loadBalanceHosts=true&targetServerType=any
+    username: ${POSTGRES_USERNAME:citus}
+    password: ${POSTGRES_PASSWORD:citus_password}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:redis_password}
+      connect-timeout: 2s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER:localhost}:${KAFKA_PORT:9092}
+    consumer:
+      group-id: order-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        max.partition.fetch.bytes: 150000000
+        fetch.max.bytes: 150000000
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        linger.ms: 5
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    org.springframework.web: TRACE
+    org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler: TRACE
+
+minio:
+  endpoint: ${MINIO_HOST:http://localhost:9000}
+  accessKey: ${MINIO_ACCESS_KEY:minioadmin}
+  secretKey: ${MINIO_SECRET_KEY:minioadmin}
+  bucket: graph
+
+app:
+  grpc:
+    rover-host: ${ROVER_HOST:localhost}
+    mission-host: ${MISSION_HOST:localhost}

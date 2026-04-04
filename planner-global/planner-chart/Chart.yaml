@@ -1,0 +1,6 @@
+apiVersion: v2
+name: planner-global
+description: Helm chart for MAI Global Route Planner
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

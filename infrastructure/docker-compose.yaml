@@ -1,0 +1,184 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"     # API
+      - "9001:9001"     # Web UI
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis_app
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=redis_password 
+    volumes:
+      - redis_data:/data
+    command: >
+      sh -c "redis-server --requirepass \"$${REDIS_PASSWORD}\" --appendonly yes"
+    restart: always
+  kafka:
+    image: apache/kafka:4.1.1
+    container_name: kafka
+    ports:
+      - "9092:9092"   # Порт для доступа с localhost (IDE / локальные тесты)
+      - "29092:29092" # Порт для доступа из Minikube
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Q"
+      
+      # 1. Задаем три слушателя: для локалхоста, для кубера и для внутреннего контроллера
+      KAFKA_LISTENERS: EXTERNAL://0.0.0.0:9092,INTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      
+      # 2. Рекламируем правильные адреса для каждого слушателя
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092,INTERNAL://host.minikube.internal:29092
+      
+      # 3. Указываем, что и EXTERNAL, и INTERNAL работают по обычному PLAINTEXT (без SSL)
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT
+      
+      # 4. Указываем, какой слушатель брокер должен использовать для своих внутренних нужд
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_MESSAGE_MAX_BYTES: 150000000
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 150000000
+      
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+  # 1. Координатор (Управляет кластером, но в Citus 11+ воркеры тоже принимают запросы)
+  citus-coordinator:
+    image: citusdata/citus:12.1
+    container_name: citus_coordinator
+    ports:
+      - "5433:5432" # Порт для Minikube: host.minikube.internal:5433
+    environment:
+      POSTGRES_USER: citus
+      POSTGRES_PASSWORD: citus_password
+      POSTGRES_DB: citus_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - citus_coord_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # 2. Воркер 1 (Хранит половину данных)
+  citus-worker1:
+    image: citusdata/citus:12.1
+    container_name: citus_worker1
+    ports:
+      - "5434:5432" # Порт для Minikube: host.minikube.internal:5434
+    environment:
+      POSTGRES_USER: citus
+      POSTGRES_PASSWORD: citus_password
+      POSTGRES_DB: citus_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - citus_worker1_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # 3. Воркер 2 (Хранит вторую половину данных)
+  citus-worker2:
+    image: citusdata/citus:12.1
+    container_name: citus_worker2
+    ports:
+      - "5435:5432" # Порт для Minikube: host.minikube.internal:5435
+    environment:
+      POSTGRES_USER: citus
+      POSTGRES_PASSWORD: citus_password
+      POSTGRES_DB: citus_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - citus_worker2_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # 4. Инициализатор кластера (Привязывает воркеры к координатору)
+  citus-setup:
+    image: postgres:15-alpine
+    container_name: citus_setup
+    depends_on:
+      - citus-coordinator
+      - citus-worker1
+      - citus-worker2
+    environment:
+      PGUSER: citus
+      PGPASSWORD: citus_password
+    # Используем pg_isready вместо psql \q для проверки готовности
+    command: >
+      sh -c "
+        echo 'Waiting for Citus Coordinator to start...' &&
+        until pg_isready -h citus-coordinator -p 5432 -U citus; do
+          sleep 2;
+        done &&
+        echo 'Coordinator is up! Adding workers...' &&
+        psql -h citus-coordinator -d citus_db -c \"SELECT citus_add_node('citus-worker1', 5432);\" &&
+        psql -h citus-coordinator -d citus_db -c \"SELECT citus_add_node('citus-worker2', 5432);\" &&
+        echo 'Citus Cluster Initialization Complete!'
+      "
+  mqtt_broker:
+    image: eclipse-mosquitto:2
+    container_name: mqtt_broker
+    ports:
+      - "1883:1883" # Стандартный порт MQTT
+    # Используем два простых echo вместо сложных переносов строк
+    command: >
+      sh -c "
+        echo 'listener 1883' > /mosquitto/config/mosquitto.conf &&
+        echo 'allow_anonymous true' >> /mosquitto/config/mosquitto.conf &&
+        /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf
+      "
+    restart: unless-stopped
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    container_name: clickhouse
+    ports:
+      - "8123:8123" # HTTP порт (через него обычно ходит JDBC)
+      - "9010:9000" # Нативный порт проброшен на 9010, чтобы избежать конфликта с MinIO (9000)
+    environment:
+      CLICKHOUSE_DB: telemetry_db
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ch_password
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    restart: unless-stopped
+
+  postgres_rovers:
+    image: postgres:15-alpine
+    container_name: postgres_rovers
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin_password
+      POSTGRES_DB: rovers_db
+    volumes:
+      - pg_rovers_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+
+volumes:
+  minio_data:
+  redis_data:
+  kafka_data:
+  clickhouse_data:
+  citus_coord_data:
+  citus_worker1_data:
+  citus_worker2_data:
+  pg_rovers_data:

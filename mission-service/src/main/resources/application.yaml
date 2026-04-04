@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: mission-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5433,${POSTGRES_HOST:localhost}:5434,${POSTGRES_HOST:localhost}:5435/citus_db?loadBalanceHosts=true&targetServerType=any
+    username: ${POSTGRES_USERNAME:citus}
+    password: ${POSTGRES_PASSWORD:citus_password}
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER:localhost}:${KAFKA_PORT:9092}
+    consumer:
+      group-id: mission-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        max.partition.fetch.bytes: 150000000
+        fetch.max.bytes: 150000000

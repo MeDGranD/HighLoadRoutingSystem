@@ -1,0 +1,31 @@
+replicaCount: 1
+
+image:
+  repository: routing-service
+  pullPolicy: Never
+  tag: "local"
+
+config:
+  REDIS_HOST: "host.minikube.internal"
+  KAFKA_SERVER: "host.minikube.internal"
+  KAFKA_PORT: "29092"
+  MINIO_HOST: "http://host.minikube.internal:9000"
+  REGION_ID: "6"
+
+secrets:
+  REDIS_PASSWORD: "redis_password"
+  MINIO_ACCESS_KEY: "minioadmin"
+  MINIO_SECRET_KEY: "minioadmin"
+
+service:
+  type: ClusterIP
+  port: 8080
+  grpcPort: 9090
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1024Mi

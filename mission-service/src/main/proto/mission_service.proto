@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_package = "ru.ilyubarskiy.mai.generated";
+option java_multiple_files = true;
+
+service MissionService {
+  rpc GetByOrderId(GetByOrderIdRequest) returns (GetByOrderIdResponse);
+  rpc GetByRoverId(GetByRoverIdRequest) returns (GetByRoverIdResponse);
+}
+
+message GetByOrderIdRequest {
+  string order_id = 1;
+}
+
+message GetByOrderIdResponse {
+  bool found = 1;
+  string mission_id = 2;
+  string rover_id = 3;
+  string status = 4;
+  string payload_json = 5;
+}
+
+message GetByRoverIdRequest {
+  string roverId = 1;
+}
+message GetByRoverIdResponse {
+  bool found = 1;
+  string mission_id = 2;
+  string rover_id = 3;
+  string status = 4;
+  string payload_json = 5;
+}

@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: rover-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/rovers_db
+    username: ${POSTGRES_USERNAME:admin}
+    password: ${POSTGRES_PASSWORD:admin_password}
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER:localhost}:${KAFKA_PORT:9092}
+    consumer:
+      group-id: rover-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        max.partition.fetch.bytes: 150000000
+        fetch.max.bytes: 150000000
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:redis_password}
+      connect-timeout: 2s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2

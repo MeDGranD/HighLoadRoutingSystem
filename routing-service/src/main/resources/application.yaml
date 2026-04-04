@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: routing-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: 6379
+      password: ${REDIS_PASSWORD:redis_password}
+      connect-timeout: 2s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVER:localhost}:${KAFKA_PORT:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+minio:
+  endpoint: ${MINIO_HOST:http://localhost:9000}
+  accessKey: ${MINIO_ACCESS_KEY:minioadmin}
+  secretKey: ${MINIO_SECRET_KEY:minioadmin}
+
+graph:
+  bucket: graph
+  region: ${REGION_ID:6}
+
+app:
+  kafka:
+    weights-topic: region-weights
+
+grpc:
+  server:
+    port: 9090

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-mission-config
+data:
+  POSTGRES_HOST: {{ .Values.config.POSTGRES_HOST | quote }}
+  KAFKA_SERVER: {{ .Values.config.KAFKA_SERVER | quote }}
+  KAFKA_PORT: {{ .Values.config.KAFKA_PORT | quote }}

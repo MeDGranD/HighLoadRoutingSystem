@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: rover-facade
+  pullPolicy: Never
+  tag: "local"
+
+config:
+  REDIS_HOST: "host.minikube.internal"
+  KAFKA_SERVER: "host.minikube.internal"
+  KAFKA_PORT: "29092"
+  CLICKHOUSE_HOST: "host.minikube.internal"
+  MQTT_HOST: "host.minikube.internal"
+
+secrets:
+  REDIS_PASSWORD: "redis_password"
+  CLICKHOUSE_USERNAME: "default"
+  CLICKHOUSE_PASSWORD: "ch_password"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

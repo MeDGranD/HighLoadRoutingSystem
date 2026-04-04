@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: mission-service
+  pullPolicy: Never
+  tag: "v5"
+
+config:
+  POSTGRES_HOST: "host.minikube.internal"
+  KAFKA_SERVER: "host.minikube.internal"
+  KAFKA_PORT: "29092"
+
+secrets:
+  POSTGRES_USERNAME: "citus"
+  POSTGRES_PASSWORD: "citus_password"
+
+service:
+  type: ClusterIP
+  port: 8080
+  grpcPort: 9090
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
