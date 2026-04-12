@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: routing-service
   pullPolicy: Never
-  tag: "local"
+  tag: "v1"
 
 config:
   REDIS_HOST: "host.minikube.internal"
@@ -24,8 +24,8 @@ service:
 
 resources:
   requests:
-    cpu: 100m
-    memory: 512Mi
+    cpu: 1000m
+    memory: 1024Mi
   limits:
     cpu: 1000m
     memory: 1024Mi

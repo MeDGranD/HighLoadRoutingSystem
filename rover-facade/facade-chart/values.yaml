@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: rover-facade
   pullPolicy: Never
-  tag: "local"
+  tag: "v1"
 
 config:
   REDIS_HOST: "host.minikube.internal"

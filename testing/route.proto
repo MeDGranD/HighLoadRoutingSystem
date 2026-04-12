@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option java_package = "ru.ilyubarskiy.mai.generated";
+option java_multiple_files = true;
+
+service RoutingService {
+  rpc GetRoute(RouteRequest) returns (RouteResponse);
+  rpc GetBoundaryConnections(BoundaryConnectionsRequest) returns (BoundaryConnectionsResponse);
+  rpc SnapToNode(SnapRequest) returns (SnapResponse);
+}
+
+message RouteRequest {
+  RouteNode from_node = 1;
+  RouteNode to_node = 2;
+}
+
+message RouteResponse {
+  double distance = 1;
+  int64 time = 2;
+  RouteNode to_node = 3;
+  string encoded_path = 4;
+}
+
+message BoundaryConnectionsRequest {
+  RouteNode point = 1;
+  repeated BoundaryNode boundaries = 2;
+  bool is_start = 3;
+}
+
+message BoundaryConnectionsResponse {
+  map<int64, int64> connections = 1;
+}
+
+message BoundaryNode {
+  int64 id = 1;
+  double lat = 2;
+  double lon = 3;
+}
+
+message RouteNode {
+  double lat = 1;
+  double lon = 2;
+}
+
+message SnapRequest {
+  double lat = 1;
+  double lon = 2;
+}
+
+message SnapResponse {
+  int64 node_id = 1;
+}

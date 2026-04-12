@@ -27,6 +27,7 @@ import ru.ilyubarskiy.mai.routing_service.configuration.wieghting.RobotWeighting
 import ru.ilyubarskiy.mai.routing_service.service.GraphCacheLoader
 import ru.ilyubarskiy.mai.routing_service.service.PriorityProvider
 import ru.ilyubarskiy.mai.routing_service.service.TrafficProvider
+import java.io.File
 
 @Configuration
 class GraphhopperConfiguration(
@@ -87,7 +88,7 @@ class GraphhopperConfiguration(
             }
         }
 
-        hopper.osmFile = downloadedPbfPath
+        hopper.osmFile = File("moscow.osm.pbf").absolutePath
 
         hopper.setGraphHopperLocation("graph-cache")
 

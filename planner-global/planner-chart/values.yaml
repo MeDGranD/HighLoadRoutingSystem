@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: planner-global
   pullPolicy: Never
-  tag: "v9"
+  tag: "v10"
 
 config:
   KAFKA_SERVER: "host.minikube.internal"

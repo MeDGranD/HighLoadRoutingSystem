@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: rover-service
   pullPolicy: Never
-  tag: "v5"
+  tag: "v6"
 
 config:
   POSTGRES_HOST: "host.minikube.internal"

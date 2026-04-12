@@ -41,7 +41,7 @@ class RegionMatrixUpdater(
 ) {
     private val cpuDispatcher = Dispatchers.Default
 
-    @Scheduled(fixedRate = 300000, initialDelay = 15000)
+    //@Scheduled(fixedRate = 300000, initialDelay = 15000)
     @SchedulerLock(
         name = "matrix_update_region_\${graph.region}",
         lockAtMostFor = "2m",
